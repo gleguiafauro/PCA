@@ -1,0 +1,81 @@
+#repeting pca analysis but with standarization
+#installing the packages
+devtools::install_github("kassambara/factoextra", force=TRUE)
+install.packages("factorextra")
+install.packages("Rtools")
+install.packages("ggplot2")
+install.packages("FactoMineR")
+library("factoextra")
+library(ggplot2)
+library(FactoMineR)
+
+#I try the function
+?fviz_eig
+#packages correctly installed
+#I load the dataset genphen
+genphen=read.csv2("GenPhen.csv")
+#I am not sure, but I think that my data is quantitative, or even mixed (phenotype=qualitative and the rest is quantitative). If it is only quantitative
+#then I have to go for PCA, if it is mixed, --> Factor analysis of mixed data FAMD or Multiple factor analysis MFA. If it is only qualitative then Multiple
+#correspondence analysis MCA. PCA is ok to be run in genphen.noAPOE, but for using it including APOE maybe I need to standarize. 
+#lets do PCA with genphen.APOE with standarization
+#use scaled function for standarization. First check mean and sd of the dataset with colmeans() and apply()
+colMeans(genphen)
+apply(genphen, 2, sd)
+#now lets standarize the data with scale(d.dat()
+scaled.genphen=scale(genphen)
+#check it works. it should be mean=0 and sd=1
+colMeans(scaled.genphen)
+apply(scaled.genphen,2,sd)
+#it is standarize, so lets proceed with PCA
+res.pca=PCA(scaled.genphen,graph=FALSE)
+eig.values=get_eig(res.pca)
+#to store eig.values
+write.csv2(eig.values,"Eig.values.standarization.csv")
+#visualize eigenvalues
+fviz_screeplot(res.pca,geom="line",addlabels=TRUE,linecolor="orange",main="Eigenvalues from PCA with Phenotype and APOE")
+#plotting the variables 
+fviz_pca_var(res.pca,repel=TRUE,col.var="contrib",gradient.cols=c("#00AFBB", "#E7B800", "#FC4E07"),select.var=list(contrib=10), title="Top 10 variables in contrib",label="var")
+#get the results for variables
+var=get_pca_var(res.pca)
+var
+#plo variables by contribution to each PC
+#PC1
+fviz_contrib(res.pca,choice="var",axes=1,top=10,ylim=c(0,40))
+?fviz_contrib
+#PC2
+fviz_contrib(res.pca,choice="var",axes=2,top=10,ylim=c(0,40))
+#obtain the specific values vor variables
+write.csv2(r1,"Variables.standarization.pca.csv")
+#all the work is done with variables, lets do it with individuals
+#firstplot the individuals in a graph
+?fviz_pca_ind
+fviz_pca_ind(res.pca,label="none",habillage="Phenotype",addEllipses = TRUE, title="PCA - Individuals with Phenotype")
+#now I want to perform the same analysis but without including the phenotype
+#first remove the column phenotype and standarize it
+gen.nophen=genphen[,c(1:85)]
+#check mean and sd
+colMeans(gen.nophen)
+apply(gen.nophen,2,sd)
+#not standanrized, so lets do it
+scaled.gen.nophen=scale(gen.nophen)
+#check mean and sd
+colMeans(scaled.gen.nophen)
+apply(scaled.gen.nophen,2,sd)
+#done, now I can start with the analysis
+?PCA
+pca.nophen=PCA(scaled.gen.nophen,graph=FALSE)
+eig.values.nophen=get_eig(pca.nophen)
+write.csv2(eig.values.nophen,"Eigenvalues.noPhen.PCA.standarization")
+#lets visualize the eigenvalues
+fviz_screeplot(pca.nophen,geom="line",addlabels=TRUE,linecolor="orange",main="Eigenvalues from PCA with APOE and without Phenotype")
+#plotting variables
+fviz_pca_var(pca.nophen,repel=TRUE,col.var="contrib",gradient.cols=c("#00AFBB", "#E7B800", "#FC4E07"),select.var=list(contrib=10), title="Top 10 variables in contrib",label="var")
+#contribution of variables
+fviz_contrib(pca.nophen,choice="var",axes=1,top=10,ylim=c(0,40))
+fviz_contrib(pca.nophen,choice="var",axes=2,top=10,ylim=c(0,40))
+#obtain the variable values
+var.noPhen=get_pca_var(pca.nophen)
+write.csv2(r2,"ContributionVariables.PCa.noPhen.csv")
+#same with individuals
+
+fviz_pca_ind(pca.nophen,label="none",habillage=genphen$Phenotype,addEllipses = TRUE, title="PCA - Individuals with Phenotype")
